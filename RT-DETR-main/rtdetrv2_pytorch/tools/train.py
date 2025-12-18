@@ -42,7 +42,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
     # priority 0
-    parser.add_argument('-c', '--config', type=str, default='RT-DETR-main\rtdetrv2_pytorch\configs\rtdetrv2\rtdetrv2_r18vd_120e_coco.yml')
+    parser.add_argument('-c', '--config', type=str, default='./configs/rtdetrv2/rtdetrv2_r18vd_120e_coco.yml')
     parser.add_argument('-r', '--resume', type=str, help='resume from checkpoint')
     parser.add_argument('-t', '--tuning', type=str, help='tuning from checkpoint')
     parser.add_argument('-d', '--device', type=str, help='device',)
