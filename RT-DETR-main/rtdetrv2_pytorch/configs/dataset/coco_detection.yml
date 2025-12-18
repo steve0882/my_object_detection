@@ -10,7 +10,7 @@ evaluator:
 # num_classes: 91
 # remap_mscoco_category: False
 
-num_classes: 80
+num_classes: 1
 remap_mscoco_category: True
 
 
