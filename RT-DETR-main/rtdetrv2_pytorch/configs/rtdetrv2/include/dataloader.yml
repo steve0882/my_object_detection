@@ -3,17 +3,15 @@ train_dataloader:
   dataset: 
     transforms:
       ops:
+        - {type: Resize, size: [640, 640], }
         - {type: RandomPhotometricDistort, p: 0.5}
         - {type: RandomZoomOut, fill: 0, p: 0.5}
         - {type: RandomIoUCrop, p: 0.8}
         - {type: SanitizeBoundingBoxes, min_size: 1}
         - {type: RandomHorizontalFlip}
         - {type: Resize, size: [640, 640], }
-        # - {type: SanitizeBoundingBoxes, min_size: 1}
-        # - {type: ConvertPILImage, dtype: 'float32', scale: True}
-        - {type: ToImageTensor}
-        - {type: ConvertDtype}
-        - {type: SanitizeBoundingBox, min_size: 1}   
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True} 
         - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
       policy:
         name: stop_epoch
