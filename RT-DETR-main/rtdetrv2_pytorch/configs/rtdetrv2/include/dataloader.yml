@@ -4,11 +4,11 @@ train_dataloader:
     transforms:
       ops:
         - {type: RandomPhotometricDistort, p: 0.5}
-        - {type: RandomZoomOut, fill: 0}
-        - {type: RandomIoUCrop, p: 0.8}
-        - {type: SanitizeBoundingBoxes, min_size: 1}
-        - {type: RandomHorizontalFlip}
-        - {type: Resize, size: [640, 640], }
+        - {type: RandomZoomOut, fill: 0, max_scale: 2.0, p: 0.5}
+        - {type: RandomIoUCrop, min_scale: 0.3, max_scale: 1.0, min_aspect_ratio: 0.5, max_aspect_ratio: 2.0, p: 0.8}
+        - {type: SanitizeBoundingBoxes, min_size: 1, remove_empty : True, clip_bounds: True}
+        - {type: RandomHorizontalFlip, p: 0.5}
+        - {type: Resize, size: [640, 640], keep_ratio: False }
         - {type: SanitizeBoundingBoxes, min_size: 1}
         - {type: ConvertPILImage, dtype: 'float32', scale: True}   
         - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
