@@ -17,17 +17,22 @@ class DETR(nn.Module):
         self.col_embed = nn.Parameter(torch.rand(50, hidden_dim // 2))
 
     def forward(self, inputs):
-        x = self.backbone(inputs)
+        x = self.backbone(inputs)  # input -> inputs
         h = self.conv(x)
         H, W = h.shape[-2:]
+        B = h.shape[0]
+
         pos = torch.cat([
             self.col_embed[:W].unsqueeze(0).repeat(H, 1, 1),
             self.row_embed[:H].unsqueeze(1).repeat(1, W, 1),
-        ], dim=-1).flatten(0, 1).unsqueeze(1)
-        h = self.transformer(pos + h.flatten(2).permute(2, 0, 1),
-                             self.query_pos.unsqueeze(1))
-        return self.linear_class(h), self.linear_bbox(h).sigmoid()
-    
+        ], dim=-1).flatten(0, 1).unsqueeze(1)          # (HW,1,D)
+
+        src = pos + h.flatten(2).permute(2, 0, 1)      # (HW,B,D) pos 会自动 broadcast
+        tgt = self.query_pos.unsqueeze(1).repeat(1, B, 1)  # (Q,B,D) 关键：repeat 到 batch
+
+        hs = self.transformer(src, tgt)                # (Q,B,D)
+        return self.linear_class(hs), self.linear_bbox(hs).sigmoid()
+
 if __name__ == '__main__':
     detr = DETR(num_classes=91, hidden_dim=256, nheads=8, num_encoder_layers=6, num_decoder_layers=6)
     detr.eval()
