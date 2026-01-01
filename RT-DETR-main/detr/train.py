@@ -128,6 +128,7 @@ class DetrCriterion(nn.Module):
         super().__init__()
         self.num_classes = num_classes
         self.w_ce, self.w_l1, self.w_giou = w_ce, w_l1, w_giou
+        self.eos_coef = 0.1
 
     def forward(self, outputs, targets):
         pred_logits, pred_boxes = outputs
@@ -147,9 +148,13 @@ class DetrCriterion(nn.Module):
             tgt_boxes[b, i] = targets[b]["boxes"][j]
             mask[b, i] = True
 
+        weight = torch.ones(self.num_classes + 1, device=device)
+        weight[self.num_classes] = self.eos_coef  # 背景类权重更小
+
         ce = F.cross_entropy(
             pred_logits.permute(1, 0, 2).reshape(-1, pred_logits.shape[-1]),
             tgt_classes.reshape(-1),
+            weight=weight,
             reduction="mean"
         )
 
@@ -227,7 +232,18 @@ def main():
                  num_encoder_layers=6, num_decoder_layers=6).to(device)
 
     criterion = DetrCriterion(num_classes=args.num_classes).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    # optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+
+    backbone, others = [], []
+    for n, p in model.named_parameters():
+        (backbone if n.startswith("backbone") else others).append(p)
+
+    optimizer = torch.optim.AdamW(
+        [{"params": backbone, "lr": args.lr * 0.1},
+        {"params": others,   "lr": args.lr}],
+        weight_decay=args.weight_decay
+    )
+
 
     start_epoch = 1
     best_val = float("inf")
@@ -268,6 +284,11 @@ def main():
             val_loss = v / max(1, len(val_loader))
 
         print(f"Epoch {epoch:03d} | train_loss={train_loss:.4f} | val_loss={val_loss:.4f}")
+
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        # 每个 epoch 结束后
+        scheduler.step()
+
 
         if val_loss < best_val:
             best_val = val_loss
